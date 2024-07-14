@@ -1,0 +1,25 @@
+#version 460 core
+
+// in = coming into the shader from somewhere else
+// location = index
+layout (location = 0) in vec3 vPosition;
+layout (location = 1) in vec3 vColour;
+layout (location = 2) in vec2 vTexCoords;
+
+uniform mat4 model = mat4(1.0);
+uniform mat4 view = mat4(1.0);
+uniform mat4 projection = mat4(1.0);
+
+out vec3 fColour;
+out vec2 fTexCoords;
+
+void main() {
+	// gl_Position is the position of the vertex based on screen and then offset
+	gl_Position = projection * view * model * vec4(vPosition, 1.0); // vec4(vec3) = auto convert vec3 into vec4
+
+	// Pass the colour from the vertex to the frag shader
+	fColour = vColour;
+
+	// Pass the texture coordinates to the frag shader
+	fTexCoords = vTexCoords;
+}
