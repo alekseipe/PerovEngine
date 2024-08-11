@@ -3,9 +3,7 @@
 
 // System libraries
 #include <functional>
-#include <algorithm>
 
-// Template class for event handling
 template<typename... Args>
 class PEvents
 {
@@ -15,55 +13,84 @@ public:
 	{
 		// Create a unique pointer for the new callback node
 		auto newNode = TMakeUnique<PCallbackNode>();
+		// Move the provided callback function into the newly created node
 		newNode->callback = std::move(callback);
-		PUi8 id = 1;
+		// Initialize the callback ID
+		PUi8 id = 0;
 
-		if (!m_CallbackNodes.empty())
+		if (m_CallbackNodes.size() > 0)
 		{
-			// Find a unique ID for the callback node
-			while (std::any_of(m_CallbackNodes.begin(), m_CallbackNodes.end(),
-				[id](const TUnique<PCallbackNode>& node) { return node->id == id; }))
+			// Determine a unique ID for the callback node
+			// Start with the ID value of 1
+			PUi8 potentialID = 1;
+			// Loop to find an available ID
+			while (id == 0)
 			{
-				++id;
+				// Assume the ID is available
+				bool foundID = false;
+				// Check if the ID is already in use by any node
+				for (const auto& node : m_CallbackNodes)
+				{
+					if (node->id == potentialID)
+					{
+						foundID = true;
+						break;
+					}
+				}
+				// If no existing node has the potential ID, assign it to the new node
+				if (!foundID)
+				{
+					id = potentialID;
+					break;
+				}
+				// Increment the potential ID if it was already taken
+				++potentialID;
 			}
+		}
+		else
+		{
+			id = 0;
 		}
 
 		newNode->id = id;
-		// Add the unique callback node to the array
+
+		// Add the unique callback node to the array of callbacks
 		m_CallbackNodes.push_back(std::move(newNode));
 
 		return id;
 	}
 
-	// Run all functions bound to this event listener
+	// Execute all functions that have been bound to this event listener
 	void Run(const Args... args)
 	{
-		// Loop through all stored functions and run them with the provided arguments
+		// Iterate over all stored functions
 		for (const auto& node : m_CallbackNodes)
 		{
+			// Execute each function with the provided arguments
 			node->callback(args...);
 		}
 	}
 
-	// Unbind a function based on the index
+	// Remove a function based on its index
+	// The index is returned by the Bind function
 	void Unbind(const PUi8& index)
 	{
-		std::erase_if(m_CallbackNodes, [index](const TUnique<PCallbackNode>& node) {
-			return node->id == index;
-			});
+		std::erase_if(m_CallbackNodes.begin(), m_CallbackNodes.end(),
+			[index](const PCallbackNode& node) {
+				return node->id == index;
+			}
+		);
 	}
 
 private:
-	// Structure for storing callback information
 	struct PCallbackNode
 	{
-		std::function<void(Args...)> callback; // The callback function
-		PUi8 id;                              // The unique ID for the callback
+		std::function<void(Args...)> callback;
+		PUi8 id;
 	};
 
-	// Array for storing callback nodes
+	// Store functions to be executed when the event is triggered
 	TArray<TUnique<PCallbackNode>> m_CallbackNodes;
 };
 
-// Specialization for events with no arguments
 typedef PEvents<> PEventsVoid;

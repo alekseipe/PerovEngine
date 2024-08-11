@@ -1,6 +1,6 @@
 #pragma once
 
-// System libraries
+// System Headers
 #include "EngineTypes.h"
 #include "Math/PSTransform.h"
 

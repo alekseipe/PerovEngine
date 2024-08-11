@@ -1,53 +1,38 @@
-// Internal headers
 #include "PWindow.h"
 #include "Graphics/PGraphicsEngine.h"
 #include "Debug/PDebug.h"
 #include "Listeners/PInput.h"
 #include "Graphics/PSCamera.h"
 
-// External libraries
+// External Headers
 #include <SDL/SDL.h>
 
-PWindow::PWindow()
-{
+PWindow::PWindow() {
 	m_SDLWindow = nullptr;
 	m_ShouldClose = false;
 	m_CameraDirection = glm::vec3(0.0f);
 	m_CameraRotation = glm::vec3(0.0f);
 	m_CanZoom = false;
 	m_InputMode = false;
-
 	std::cout << "Window created" << std::endl;
 }
 
-PWindow::~PWindow()
-{
-	// Destroy the SDL window if it exists
+PWindow::~PWindow() {
 	if (m_SDLWindow)
 		SDL_DestroyWindow(m_SDLWindow);
-
 	std::cout << "Window destroyed" << std::endl;
 }
 
-bool PWindow::CreateWindow(const PSWindowParams& params)
-{
-	// Enable OpenGL in the SDL window
+bool PWindow::CreateWindow(const PSWindowParams& params) {
 	unsigned int windowFlags = SDL_WINDOW_OPENGL;
-
-	// Store window parameters
 	m_Params = params;
-
-	// Add high DPI flag if vsync is enabled
 	if (m_Params.vsync)
 		windowFlags += SDL_WINDOW_ALLOW_HIGHDPI;
-
-	// Set window mode (fullscreen or windowed)
 	if (m_Params.fullscreen)
-		windowFlags += SDL_WINDOW_FULLSCREEN_DESKTOP; // Fullscreen borderless
+		windowFlags += SDL_WINDOW_FULLSCREEN_DESKTOP;
 	else
-		windowFlags += SDL_WINDOW_SHOWN; // Windowed mode
+		windowFlags += SDL_WINDOW_SHOWN;
 
-	// Create the SDL window
 	m_SDLWindow = SDL_CreateWindow(
 		m_Params.title.c_str(),
 		m_Params.x,
@@ -57,19 +42,16 @@ bool PWindow::CreateWindow(const PSWindowParams& params)
 		windowFlags
 	);
 
-	// Check if the SDL window was created successfully
-	if (!m_SDLWindow)
-	{
+	if (!m_SDLWindow) {
 		std::cout << "SDL failed to create window: " << SDL_GetError() << std::endl;
 		CloseWindow();
 		return false;
 	}
 
-	// Initialize the graphics engine
 	m_GraphicsEngine = std::make_unique<PGraphicsEngine>();
-	if (!m_GraphicsEngine->InitEngine(m_SDLWindow, m_Params.vsync))
-	{
-		PDebug::Log("Failed to initialize graphics engine", LT_ERROR);
+
+	if (!m_GraphicsEngine->InitEngine(m_SDLWindow, m_Params.vsync)) {
+		PDebug::Log("Window failed to initialize graphics engine", LT_ERROR);
 		m_GraphicsEngine = nullptr;
 		return false;
 	}
@@ -77,112 +59,103 @@ bool PWindow::CreateWindow(const PSWindowParams& params)
 	return true;
 }
 
-void PWindow::RegisterInput(const TShared<PInput>& m_Input)
-{
-	// Hide the cursor and set relative mouse mode
+void PWindow::RegisterInput(const TShared<PInput>& m_Input) {
 	m_Input->ShowCursor(false);
+	m_Input->OnKeyPress->Bind([this, m_Input](const SDL_Scancode& key) {
+		if (key == SDL_SCANCODE_ESCAPE)
+			CloseWindow();
+		if (key == SDL_SCANCODE_PERIOD) {
+			m_Input->ShowCursor(m_Input->IsCursorHidden());
+			m_InputMode = !m_Input->IsCursorHidden();
+		}
+		if (key == SDL_SCANCODE_W)
+			m_CameraDirection.z += 1.0f;
+		if (key == SDL_SCANCODE_S)
+			m_CameraDirection.z -= 1.0f;
+		if (key == SDL_SCANCODE_A)
+			m_CameraDirection.x -= 1.0f;
+		if (key == SDL_SCANCODE_D)
+			m_CameraDirection.x += 1.0f;
+		if (key == SDL_SCANCODE_Q)
+			m_CameraDirection.y -= 1.0f;
+		if (key == SDL_SCANCODE_E)
+			m_CameraDirection.y += 1.0f;
+		if (key == SDL_SCANCODE_F)
+			m_GraphicsEngine->ToggleFlashlight();
+		if (key == SDL_SCANCODE_1)
+			m_GraphicsEngine->IncreaseFlashlightRed();
+		if (key == SDL_SCANCODE_2)
+			m_GraphicsEngine->IncreaseFlashlightGreen();
+		if (key == SDL_SCANCODE_3)
+			m_GraphicsEngine->IncreaseFlashlightBlue();
+		if (key == SDL_SCANCODE_4)
+			m_GraphicsEngine->DecreaseFlashlightRed();
+		if (key == SDL_SCANCODE_5)
+			m_GraphicsEngine->DecreaseFlashlightGreen();
+		if (key == SDL_SCANCODE_6)
+			m_GraphicsEngine->DecreaseFlashlightBlue();
+		if (key == SDL_SCANCODE_I)
+			m_GraphicsEngine->IncreaseFlashlightInnerRadius();
+		if (key == SDL_SCANCODE_O)
+			m_GraphicsEngine->IncreaseFlashlightOuterRadius();
+		if (key == SDL_SCANCODE_J)
+			m_GraphicsEngine->DecreaseFlashlightInnerRadius();
+		if (key == SDL_SCANCODE_K)
+			m_GraphicsEngine->DecreaseFlashlightOuterRadius();
+		if (key == SDL_SCANCODE_P)
+			m_GraphicsEngine->IncreaseFlashlightIntensity();
+		if (key == SDL_SCANCODE_L)
+			m_GraphicsEngine->DecreaseFlashlightIntensity();
+		});
 
-	// Bind key press events
-	m_Input->OnKeyPress->Bind([this, m_Input](const SDL_Scancode& key)
-		{
-			// Handle quick exit for debug
-			if (key == SDL_SCANCODE_ESCAPE)
-				CloseWindow();
+	m_Input->OnKeyRelease->Bind([this](const SDL_Scancode& key) {
+		if (key == SDL_SCANCODE_W)
+			m_CameraDirection.z -= 1.0f;
+		if (key == SDL_SCANCODE_S)
+			m_CameraDirection.z += 1.0f;
+		if (key == SDL_SCANCODE_A)
+			m_CameraDirection.x += 1.0f;
+		if (key == SDL_SCANCODE_D)
+			m_CameraDirection.x -= 1.0f;
+		if (key == SDL_SCANCODE_Q)
+			m_CameraDirection.y += 1.0f;
+		if (key == SDL_SCANCODE_E)
+			m_CameraDirection.y -= 1.0f;
+		});
 
-			// Toggle cursor visibility
-			if (key == SDL_SCANCODE_PERIOD)
-			{
-				m_Input->ShowCursor(m_Input->IsCursorHidden());
-				m_InputMode = !m_Input->IsCursorHidden();
+	m_Input->OnMouseMove->Bind([this](const float& x, const float& y, const float& xrel, const float& yrel) {
+		m_CameraRotation.y = -xrel;
+		m_CameraRotation.x = -yrel;
+		});
+
+	m_Input->OnMouseScroll->Bind([this](const float& delta) {
+		if (m_CanZoom) {
+			if (const auto& camRef = m_GraphicsEngine->GetCamera().lock()) {
+				camRef->Zoom(delta);
 			}
-
-			// Handle camera movement input
-			if (key == SDL_SCANCODE_W) // Forward
-				m_CameraDirection.z += 1.0f;
-			if (key == SDL_SCANCODE_S) // Backward
-				m_CameraDirection.z += -1.0f;
-			if (key == SDL_SCANCODE_A) // Left
-				m_CameraDirection.x += -1.0f;
-			if (key == SDL_SCANCODE_D) // Right
-				m_CameraDirection.x += 1.0f;
-			if (key == SDL_SCANCODE_Q) // Down
-				m_CameraDirection.y += -1.0f;
-			if (key == SDL_SCANCODE_E) // Up
-				m_CameraDirection.y += 1.0f;
+		}
 		});
 
-	// Bind key release events
-	m_Input->OnKeyRelease->Bind([this](const SDL_Scancode& key)
-		{
-			// Handle camera movement stop
-			if (key == SDL_SCANCODE_W) // Forward
-				m_CameraDirection.z += -1.0f;
-			if (key == SDL_SCANCODE_S) // Backward
-				m_CameraDirection.z += 1.0f;
-			if (key == SDL_SCANCODE_A) // Left
-				m_CameraDirection.x += 1.0f;
-			if (key == SDL_SCANCODE_D) // Right
-				m_CameraDirection.x += -1.0f;
-			if (key == SDL_SCANCODE_Q) // Down
-				m_CameraDirection.y += 1.0f;
-			if (key == SDL_SCANCODE_E) // Up
-				m_CameraDirection.y += -1.0f;
+	m_Input->OnMousePress->Bind([this](const PUi8& button) {
+		if (button == SDL_BUTTON_RIGHT) {
+			m_CanZoom = true;
+		}
 		});
 
-	// Bind mouse movement events to rotate the camera
-	m_Input->OnMouseMove->Bind([this](const float& x, const float& y,
-		const float& xrel, const float& yrel)
-		{
-			m_CameraRotation.y = -xrel;
-			m_CameraRotation.x = -yrel;
-		});
-
-	// Bind mouse scroll events for zooming
-	m_Input->OnMouseScroll->Bind([this](const float& delta)
-		{
-			if (m_CanZoom)
-			{
-				if (const auto& camRef = m_GraphicsEngine->GetCamera().lock())
-				{
-					camRef->Zoom(delta);
-				}
+	m_Input->OnMouseRelease->Bind([this](const PUi8& button) {
+		if (button == SDL_BUTTON_RIGHT) {
+			m_CanZoom = false;
+			if (const auto& camRef = m_GraphicsEngine->GetCamera().lock()) {
+				camRef->ResetZoom();
 			}
-		});
-
-	// Bind mouse press events
-	m_Input->OnMousePress->Bind([this](const PUi8& button)
-		{
-			if (button == SDL_BUTTON_RIGHT)
-			{
-				m_CanZoom = true;
-			}
-		});
-
-	// Bind mouse release events
-	m_Input->OnMouseRelease->Bind([this](const PUi8& button)
-		{
-			if (button == SDL_BUTTON_RIGHT)
-			{
-				m_CanZoom = false;
-				if (const auto& camRef = m_GraphicsEngine->GetCamera().lock())
-				{
-					camRef->ResetZoom();
-				}
-			}
+		}
 		});
 }
 
-void PWindow::Render()
-{
-	// Render using the graphics engine if available
-	if (m_GraphicsEngine)
-	{
-		// Update the camera if available
-		if (const auto& camRef = m_GraphicsEngine->GetCamera().lock())
-		{
-			if (!m_InputMode)
-			{
-				// Translate and rotate the camera based on input
+void PWindow::Render() {
+	if (m_GraphicsEngine) {
+		if (const auto& camRef = m_GraphicsEngine->GetCamera().lock()) {
+			if (!m_InputMode) {
 				camRef->Translate(m_CameraDirection);
 				camRef->Rotate(m_CameraRotation, glm::abs(m_CameraRotation));
 			}

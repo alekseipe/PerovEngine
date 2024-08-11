@@ -67,7 +67,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)ExternalLibs\LIBS\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;opengl32.lib;glew32.lib;glew32s.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;opengl32.lib;glew32.lib;glew32s.lib;assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(ProjectDir)ExternalLibs\LIBS\*.dll" "$(SolutionDir)Build\$(Configuration)\"</Command>
@@ -91,7 +91,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)ExternalLibs\LIBS\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;opengl32.lib;glew32.lib;glew32s.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;opengl32.lib;glew32.lib;glew32s.lib;assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(ProjectDir)ExternalLibs\LIBS\*.dll" "$(SolutionDir)Build\$(Configuration)\"</Command>
@@ -99,6 +99,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ExternalLibs\Includes\STB_IMAGE\stb_image.cpp" />
+    <ClCompile Include="Source\Private\Game\GameObjects\PObject.cpp" />
+    <ClCompile Include="Source\Private\Game\PGameEngine.cpp" />
     <ClCompile Include="Source\Private\Graphics\PGraphicsEngine.cpp" />
     <ClCompile Include="Source\Private\Graphics\PMesh.cpp" />
     <ClCompile Include="Source\Private\Graphics\PModel.cpp" />
@@ -110,7 +112,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ExternalLibs\Includes\STB_IMAGE\stb_image.h" />
+    <ClInclude Include="Source\Public\Game\GameObjects\PObject.h" />
+    <ClInclude Include="Source\Public\Game\GameObjects\PObjectChild.h" />
+    <ClInclude Include="Source\Public\Game\PGameEngine.h" />
     <ClInclude Include="Source\Public\Graphics\PSCamera.h" />
+    <ClInclude Include="Source\Public\Graphics\PSLight.h" />
+    <ClInclude Include="Source\Public\Graphics\PSMaterial.h" />
     <ClInclude Include="Source\Public\Listeners\PInput.h" />
     <ClInclude Include="Source\Public\Listeners\PEvents.h" />
     <ClInclude Include="Source\Public\Math\PSTransform.h" />

@@ -1,34 +1,38 @@
 #pragma once
 #include "EngineTypes.h"
 
+// External Headers
+#include <GLM/mat4x4.hpp>
+
 class PShaderProgram;
 struct PSTransform;
-class PTexture;
+struct PSLight;
+struct PSMaterial;
 
-// Structure for storing vertex data
 struct PSVertexData
 {
-	float m_Position[3] = { 0.0f, 0.0f, 0.0f }; // Position of the vertex
+    float m_Position[3] = { 0.0f, 0.0f, 0.0f }; // Position of the vertex
 	float m_Colour[3] = { 1.0f, 1.0f, 1.0f };   // Colour of the vertex
 	float m_TexCoords[2] = { 0.0f, 0.0f };      // Texture coordinates
 	float m_Normal[3] = { 0.0f, 0.0f, 0.0f };   // Normal vector for lighting
+    float m_Tangent[3] = { 0.0f, 0.0f, 0.0f }; // Tangent vector: x, y, z
 };
 
-// Class for managing a mesh
 class PMesh
 {
 public:
 	PMesh();
 	~PMesh();
 
-	// Create a mesh using vertex and index data
 	bool CreateMesh(const std::vector<PSVertexData>& vertices, const std::vector<uint32_t>& indices);
 
-	// Render the mesh with a given shader and transform
-	void Render(const std::shared_ptr<PShaderProgram>& shader, const PSTransform& transform);
+	void Render(const std::shared_ptr<PShaderProgram>& shader, const PSTransform& transform,
+		const TArray<TShared<PSLight>>& lights, const TShared<PSMaterial>& material);
 
-	// Set the texture for the mesh
-	void SetTexture(const TShared<PTexture>& texture) { m_Texture = texture; }
+	void SetRelativeTransform(const glm::mat4& transform) { m_MatTransform = transform; }
+
+	// Index for the material relative to the model's material array
+	unsigned int materialIndex;
 
 private:
 	// Store the vertices of the mesh
@@ -46,6 +50,6 @@ private:
 	// ID for the Element Array Object
 	uint32_t m_EAO;
 
-	// Texture for the mesh
-	TShared<PTexture> m_Texture;
+	// Mesh's transformation matrix relative to the model
+	glm::mat4 m_MatTransform;
 };
